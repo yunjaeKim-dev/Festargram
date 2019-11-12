@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamproject.mapper.FileMapper">
+	<insert id="insert" parameterType="com.teamproject.domain.AttachFile">
+		INSERT INTO ATTACHFILE(UUID, FILENAME, UPLOADPATH, MIMETYPE, FILESIZE, REFNO) VALUES(#{uuid}, #{fileName} , #{uploadPath},#{mimeType}, #{fileSize}, #{refno}) 
+	</insert>
+	
+	<delete id="delete" parameterType="string">
+		DELETE ATTACHFILE WHERE UUID = #{uuid}
+	</delete>
+	
+	<select id="getAttachListByPostno" resultType="com.teamproject.domain.AttachFile" parameterType="integer">
+		SELECT * FROM ATTACHFILE WHERE REFNO = #{refno} 
+	</select>
+	
+	
+	<delete id="deleteAll" parameterType="integer">
+		DELETE FROM ATTACHFILE WHERE REFNO = #{refno}
+	</delete>
+	
+	<select id="getOldFiles" resultType="com.teamproject.domain.AttachFile">
+		SELECT * FROM ATTACHFILE WHERE UPLOADPATH = TO_CHAR(SYSDATE -1, 'YYYY\MM\DD')
+	</select>
+</mapper>
+

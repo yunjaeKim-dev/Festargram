@@ -1,0 +1,115 @@
+@charset "UTF-8";
+
+*{margin: 0; padding:0 auto; list-style:none; text-decoration:none; font-family: 'Noto Sans KR', sans-serif;}
+footer, header{background-color: rgb(21,52,80);padding: 15px;}
+header{color: white;}
+footer{width: 100%;}
+a{color:black;}
+main:not(.nogray){background-color:#f2f3f5!important;}
+/* 위치 초기화 하기 위한 클래스 */
+.top{top:0;}
+.bottom{bottom:0;}
+.left{left:0;}
+.right{right:0;}
+
+/* white-space */
+.pre-line{white-space:pre-line}
+.no-wrap{white-space:nowrap;}
+/* 댓글 border-radius  */
+.reply-radius{border-radius:18px}
+
+/* 타임라인헤더쓰는놈 메인에 요클래스 붙여주세요*/
+.main-top-padding{padding-top:48px;}
+/* 마이페이지 좌측사이드바 최소높이 */
+.mypage-left-sidebar{min-height:600px;}
+	/* 타임라인헤더 알림창 크기 */
+.alarm-box{width:430px;}
+.cursor{cursor:pointer;}
+/* 드롭다운 토글버튼 안보이게 */
+.dropright .dropdown-toggle::after, .dropdown-toggle::after {
+    display: none;
+}
+/* 부트스트랩 오버라이드 1rem으로 절대크기되있는것을 상대크기 1em으로 변경하였습니다. */
+.form-control{font-size:1em;}
+.btn{font-size:1em;}
+
+/* 네비아이콘들 url 경로맞는지 아직테스트못해봄 */
+.nav-icon{width:26px; height:26px;}
+#nav-toggler-btn{background-image: url("../images/list.png");}
+
+/* fixed 기본 z-index 를 올렸어요 */
+.position-fixed{z-index : 1;}
+
+/* bg-secondary  색상관련 오버라이드 여기다가합시당*/
+.bg-secondary{background-color:#153450b5!important}
+.bg-coverimg{background-color:#4b6c8e !important}
+.btn-secondary{background-color:#cccccc!important}
+.bg-snowgray{background-color:#f2f3f5!important}
+.bg-darkgray{background-color:#444950!important}
+.bg-whitegray{background-color:#f5f6f7!important}
+.btn-whitegray{background-color:#f5f6f7!important;border:1px solid #ccd0d5 !important;}
+.btn-primary{background-color:#153450b5!important; border:none;}
+.btn-primary:hover{background-color:#153450b5!important;}
+/* 친구알림창 x버튼 */
+/* .close{display:none;} */
+.x-button{right:3px;}
+
+/* 헤더 알림창 크기 */
+.header-alarm-window{max-height:500px; overflow-y: auto}
+
+
+
+ /* 알람 프로필이미지  */
+ .alarm-icon{width:48px; height:48px;}
+ /* 게시글 작성 프로필 이미지 */
+ .post-profile-icon{width:40px; height:40px;}
+ /* 사이드바 아이콘이미지 */
+ .right-side-icon{width:42px;height:42px}
+ /* reply-icon */
+ .reply-icon{width:32px;height:32px;}
+ /* reply-child-icon */
+ .reply-child-icon{width:20px;height:20px;}
+ /* apply-icon */
+ .apply-icon{width:70px; height:70px;}
+ /* 헤더 아이콘 */
+ .logo-lg-icon{width:250px; height : 46px;}
+ /* 글작성 할떄 이미지첨부시 썸네일크기 */
+ .register-thumbnail-image{width:100px;height:100px;}
+ /* 마이페이지 프로필사진 크기 */
+ .profile-photo img{width:150px; height:150px;}
+ .profile-photo-img{width:200px; height:200px;}
+ /* 마이페이지 커버이미지 높이 */
+ .profile-cover-image{height:280px;}
+.img-thumbnail:hover , .hover-box:hover {
+background-color: gray;
+opacity: 0.5;
+}
+.hover-light-box:hover{
+background-color: #eee;
+opacity: 0.4;	
+}
+.remove-thumb:hover , .modify-remove-thumb:hover{
+background-color: gray;
+color : white;	
+}
+
+.camera-hover:hover{color : white;}
+
+/* underline */
+.text-decoration-underline:hover{text-decoration:underline !important;}
+
+/* 180도회전 */
+.rotate-180{transform:rotate(180deg);}
+
+/* bx슬라이더 */
+#myModal .modal-dialog {max-width: 98%; height:95%;}
+.wrap-flex {display: flex; margin:0 auto; justify-content: center; align-items:center; min-height:50%;} 
+.bx-wrapper, .bx-viewport {height: 90% !important; //provide height of slider}
+
+/* 타임라인, 마이페이지 메시지창 위치*/
+.message-card-position{bottom:0; right:20px;}
+
+/* 방금회원가입한 회원들처럼 정보가없을때를 대비한 최소높이 클래스 */
+.min-h-700{min-height : 700px;}
+.min-h-780{min-height : 780px;}
+.white-placeholder::placeholder{color:white}

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamproject.mapper.ReplyMapper">
+	<!-- CLOB 타입을 String으로 사용하기 위한 리절트맵  -->
+	<resultMap type="reply" id="getReplyListResult"> 
+		<result property="replyno" column="replyno"/>
+		<result property="postno" column="postno"/>
+		<result property="writer" column="writer"/>
+		<result property="regdate" column="regdate"/>
+		<result property="moddate" column="moddate"/>
+		<result property="parentno" column="parentno"/>
+		<result property="content" column="content"/>
+		<result property="thcount" column="thcount"/>
+	</resultMap>
+
+	<select id="listByPostno" resultType="myMap">
+	<![CDATA[
+        SELECT A.* FROM (
+			SELECT /*+ INDEX(REPLY IDX_REPLY_POST) */ ROWNUM RN, 
+				(SELECT CASE WHEN COUNT(*) >= (10+ ${rn}) THEN 0 ELSE 1 END CASE FROM REPLY WHERE POSTNO = #{postno}) ISEND,
+				REPLYNO, POSTNO, WRITER, TO_CHAR(REGDATE, 'YYYY/MM/DD HH24:MI:SS') AS REGDATE,
+				TO_CHAR(MODDATE, 'YYYY/MM/DD HH24:MM:SS') AS MODDATE, PARENTNO, 
+				DBMS_LOB.SUBSTR(CONTENT, 4000, 1) AS CONTENT, THCOUNT, DECODE(REPLYNO,PARENTNO, 1, 0) ISPARENT,
+                (SELECT NAME FROM MEMBER WHERE WRITER = EMAIL) NAME, 
+                (SELECT MNO FROM MEMBER WHERE WRITER = EMAIL) MNO,
+                (SELECT PROFIMG FROM MEMBER WHERE WRITER = EMAIL) PROFIMG
+                
+			FROM 
+				REPLY
+			WHERE 
+				POSTNO = #{postno}
+				AND REPLYNO > 0   
+		) A
+        WHERE ROWNUM <= 10
+        AND RN > ${rn}
+   	]]>
+	</select>
+
+	
+
+	<insert id="insert" parameterType="reply">
+		<selectKey keyProperty="replyno" resultType="int" order="BEFORE">
+			SELECT REPLY_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO REPLY(
+			REPLYNO, POSTNO, WRITER, CONTENT, PARENTNO)
+		VALUES(
+			#{replyno},#{postno},#{writer},#{content},NVL(#{parentno},#{replyno}))
+	</insert>
+
+	<delete id="delete" parameterType="int">
+		DELETE 
+			REPLY 
+		WHERE 
+			REPLYNO = #{replyno}
+	</delete>
+
+	<update id="update" parameterType="reply">
+		UPDATE 
+			REPLY SET MODDATE = SYSDATE, CONTENT = #{content} 
+		WHERE 
+			REPLYNO = #{replyno} 
+	</update>
+	
+	<select id="read" resultType="myMap">
+	<![CDATA[
+     		SELECT
+				REPLYNO, POSTNO, WRITER, TO_CHAR(REGDATE, 'YYYY/MM/DD HH24:MI:SS') AS REGDATE,
+				TO_CHAR(MODDATE, 'YYYY/MM/DD HH24:MM:SS') AS MODDATE, PARENTNO,
+				DBMS_LOB.SUBSTR(CONTENT, 4000, 1) AS CONTENT, THCOUNT, DECODE(REPLYNO,PARENTNO, 1, 0) ISPARENT, 
+                (SELECT NAME FROM MEMBER WHERE WRITER = EMAIL) NAME,
+                (SELECT MNO FROM MEMBER WHERE WRITER = EMAIL) MNO
+			FROM 
+				REPLY
+			WHERE 
+				REPLYNO = #{replyno}
+   	]]>
+	</select>
+	
+	<insert id="insertLike" parameterType="reply">
+		INSERT INTO REPLY_GOOD(
+			REPLYNO, EMAIL)
+		VALUES(
+			#{replyno},#{writer})
+	</insert>
+	
+	<delete id="deleteLike" parameterType="reply">
+		DELETE 
+			REPLY_GOOD
+		WHERE 
+			REPLYNO = #{replyno} AND EMAIL = #{writer}
+	</delete>
+	
+	
+	
+	<select id="getThumb" resultType="int">
+		SELECT 
+		    COUNT(*)
+		FROM
+		    REPLY_GOOD
+		WHERE
+		    REPLYNO = #{replyno} AND EMAIL = #{writer}
+	</select>
+	
+	<update id="updateThcount" parameterType="reply">
+		UPDATE
+			REPLY SET THCOUNT = THCOUNT + ${amount}
+		WHERE 
+			REPLYNO = #{replyno} 
+	</update>
+</mapper>

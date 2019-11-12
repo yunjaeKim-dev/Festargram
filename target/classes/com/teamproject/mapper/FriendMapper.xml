@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamproject.mapper.FriendMapper">
+	<sql id="friendA">
+		FRIEND1 = #{friend1} AND FRIEND2 = #{friend2}
+	</sql>
+	<sql id="friendB">
+		FREIND2 = #{friend1} AND FRIEND1 = #{friend2}
+	</sql>
+	<!-- 친구 목록 불러오기 -->
+	<select id="select" resultType="member" >
+		SELECT EMAIL, NAME 
+		FROM 
+		    MEMBER S
+		    JOIN
+		    FRIENDS F
+		    ON S.EMAIL = F.FRIEND2
+		WHERE F.FRIEND1 = #{email}
+	</select>
+	<!-- 친구하나 불러오기 -->
+	<select id="selectByEmail" resultType="member">
+		SELECT EMAIL, NAME
+		FROM 
+			MEMBER S
+			JOIN
+			FRIENDS F
+			ON S.EMAIL = F.FRIEND2
+		WHERE F.FRIEND1 = #{email1}
+		AND F.FRIEND2 = #{email2}
+	</select>
+	<!-- 친구 추가  -->
+	<insert id="insert1">
+		INSERT INTO FRIENDS(FRIEND1, FRIEND2) VALUES(#{friend1}, #{friend2})
+	</insert>
+	<insert id="insert2">
+		INSERT INTO FRIENDS(FRIEND1, FRIEND2) VALUES(#{friend2}, #{friend1})
+	</insert>
+	<!-- 친구 삭제 -->
+	<delete id="delete1">
+		DELETE FROM FRIENDS WHERE 
+		<include refid="friendA"/> 
+	</delete>
+	<delete id="delete2">
+		DELETE FROM FRIENDS WHERE 
+		<include refid="friendB"/> 
+	</delete>
+	
+	<!-- 친구 단일 삭제 -->	
+	<update id="ignore">
+		UPDATE FRIENDS SET(IGNORED = 1) WHERE 
+		<include refid="friendA"/>
+	</update>
+
+	<!-- 친구 단일 삭제 복구-->	
+	<update id="restore">
+		UPDATE FRIENDS SET(IGNORED = 0) WHERE 
+		<include refid="friendA"/>
+	</update>
+	
+</mapper>

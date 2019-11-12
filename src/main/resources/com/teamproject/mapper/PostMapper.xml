@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamproject.mapper.PostMapper">
+	<resultMap type="hashMap" id="postvo" >
+		<id property="postno" column="POSTNO"/>
+		<result property="writer" column="WRITER"/>
+		<result property="writerName" column="WRITERNAME"/>
+		<result property="owner" column="OWNER"/>
+		<result property="thcount" column="THCOUNT"/>
+		<result property="content" column="CONTENT" jdbcType="CLOB" javaType="java.lang.String"/>
+		<result property="regdate" column="pREGDATE"/>
+		<result property="moddate" column="MODDATE"/>
+		<result property="recdate" column="RECDATE"/>
+		<result property="replyCnt" column="REPLYCNT"/>
+		<result property="scope" column="SCOPE"/>
+		<result property="parentno" column="PARENTNO"/>
+		<collection property="attachList" resultMap="attachMap" javaType="list"/>
+	</resultMap>
+	
+	<resultMap type="hashMap" id="getTimeLineList" >
+		<id property="postno" column="POSTNO"/>
+		<result property="writer" column="WRITER"/>
+		<result property="owner" column="OWENR"/>
+		<result property="thcount" column="THCOUNT"/>
+		<result property="content" column="CONTENT" jdbcType="CLOB" javaType="java.lang.String"/>
+		<result property="regdate" column="pREGDATE"/> 
+		<result property="moddate" column="MODDATE"/>
+		<result property="recdate" column="RECDATE"/>
+		<result property="scope" column="SCOPE"/>
+		<result property="parentno" column="PARENTNO"/>
+		<result property="replyCnt" column="REPLYCNT"/>
+		<result property="writerName" column="WRITERNAME"/>
+		<result property="profimg" column="PROFIMG"/>
+		<result property="isEnd" column="ISEND"/>
+		<result property="isGood" column="ISGOOD"/>
+		<result property="rn" column="RN"/>
+		<collection property="attachList" resultMap="attachMap" javaType="list"   />
+	</resultMap>
+	<resultMap type="com.teamproject.domain.AttachFile" id="attachMap"  >
+		<result property="uuid" column="UUID"/>
+		<result property="fileName" column="FILENAME"/>
+		<result property="uploadPath" column="UPLOADPATH"/>
+		<result property="mimeType" column="MIMETYPE"/>
+		<result property="regdate" column="REGDATE"/>
+		<result property="fileSize" column="FILESIZE"/>
+		<result property="refno" column="REFNO"/>
+	</resultMap>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<select id="getPostList" resultMap="postvo">
+		SELECT * FROM POST WHERE POSTNO > 0
+	</select>
+	
+	<select id="getPost" resultMap="getTimeLineList">
+		SELECT * FROM
+(
+SELECT /*+ INDEX_DESC(POST IDX_POST) */ POSTNO, WRITER, OWNER, THCOUNT, CONTENT,
+        TO_CHAR(REGDATE, 'YYYY-MM-DD') PREGDATE,
+        TO_CHAR(MODDATE, 'YYYY-MM-DD') MODDATE,
+        TO_CHAR(RECDATE, 'YYYY-MM-DD') RECDATE,
+        SCOPE, PARENTNO, REPLYCNT, 
+        (SELECT NAME FROM MEMBER WHERE WRITER = MNO) WRITERNAME,
+        (SELECT PROFIMG FROM MEMBER WHERE WRITER = MNO) PROFIMG
+
+FROM POST
+WHERE POSTNO = #{postno}
+) P
+LEFT OUTER JOIN 
+    (SELECT UUID, FILENAME, UPLOADPATH, MIMETYPE, REGDATE, FILESIZE, REFNO AS POSTNO FROM ATTACHFILE) USING(POSTNO) 
+			
+	</select>
+	
+	<insert id="insertPost" parameterType="com.teamproject.domain.Post">
+		INSERT INTO POST(POSTNO,WRITER,OWNER,CONTENT)
+		VALUES(POST_SEQ.NEXTVAL, #{writer}, #{owner}, #{content})
+	</insert>
+	
+	<insert id="insertSelectKeyPost" parameterType="com.teamproject.domain.Post">
+		<selectKey keyProperty="postno" order="BEFORE" resultType="int">
+			SELECT POST_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO POST(POSTNO,WRITER,OWNER,CONTENT)
+		VALUES(#{postno}, #{writer}, #{owner}, #{content})
+	</insert>
+	
+	<update id="updatePost">
+		UPDATE POST SET WRITER = #{writer} , OWNER = #{owner} , CONTENT = #{content} , MODDATE = SYSDATE WHERE POSTNO = #{postno}
+	</update>
+	
+	<delete id="deletePost">
+		DELETE FROM POST WHERE POSTNO = #{postno}
+	</delete>
+	
+	<select id="getMyPageTimeLine" resultMap="getTimeLineList" parameterType="map">
+		<![CDATA[
+		SELECT *
+		FROM
+		(
+			SELECT /*+ INDEX_DESC(POST IDX_POST) */ ROWNUM RN, POSTNO , WRITER, OWNER ,THCOUNT ,CONTENT,
+					 TO_CHAR(REGDATE, 'YYYY-MM-DD') pREGDATE,
+					 TO_CHAR(MODDATE, 'YYYY-MM-DD') MODDATE,
+					 TO_CHAR(RECDATE, 'YYYY-MM-DD') RECDATE,
+					 SCOPE, PARENTNO, REPLYCNT,
+		        	(SELECT NAME FROM MEMBER  WHERE WRITER = MNO) WRITERNAME, (SELECT PROFIMG FROM MEMBER WHERE WRITER = MNO) PROFIMG,
+        			(SELECT CASE WHEN COUNT(*) <= ${postRn}+10 THEN 1 ELSE 0 END CASE FROM POST WHERE OWNER = #{mno}) ISEND,
+        			NVL((SELECT CASE WHEN MNO = #{sessionno} THEN 1  END FROM POST_GOOD PG WHERE MNO = #{sessionno} AND PG.POSTNO = POST.POSTNO),0) ISGOOD
+			FROM POST
+			WHERE OWNER = #{mno} 
+			AND POSTNO > 0
+		) P
+		LEFT OUTER JOIN 
+		ATTACHFILE ON REFNO = POSTNO
+		WHERE RN <= 10 + ${postRn}
+		AND RN > ${postRn}
+		ORDER BY RN
+		]]>
+	</select>
+	<!-- (SELECT UUID, FILENAME, UPLOADPATH, MIMETYPE, REGDATE, FILESIZE, REFNO AS POSTNO FROM ATTACHFILE ) 
+		USING (POSTNO) -->
+	<update id="updateReplyCnt">
+		UPDATE POST SET REPLYCNT = REPLYCNT + ${amount} WHERE POSTNO  = #{postno}
+	</update>
+	
+	<update id="updatePostGood">
+		UPDATE POST SET THCOUNT = THCOUNT + ${amount} WHERE POSTNO = #{postno}
+	</update>
+	
+	<insert id="insertPostGood">
+		INSERT INTO POST_GOOD VALUES(#{postno}, #{mno})
+	</insert>
+	
+	<select id="isPostGood" resultType="int">
+		SELECT COUNT(*) FROM POST_GOOD WHERE POSTNO = #{postno} AND MNO = #{mno}
+	</select>
+	
+	<delete id="deletePostGood">
+		DELETE POST_GOOD WHERE POSTNO = #{postno} AND MNO = #{mno}
+	</delete>
+	
+	<select id="getNewsfeed" resultMap="getTimeLineList" parameterType="map">
+		<![CDATA[
+		SELECT *
+		FROM
+		(
+			SELECT /*+ INDEX_DESC(POST IDX_POST) */ ROWNUM RN, POSTNO , WRITER, OWNER ,THCOUNT ,CONTENT,
+					 TO_CHAR(REGDATE, 'YYYY-MM-DD') pREGDATE,
+					 TO_CHAR(MODDATE, 'YYYY-MM-DD') MODDATE,
+					 TO_CHAR(RECDATE, 'YYYY-MM-DD') RECDATE,
+					 SCOPE, PARENTNO, REPLYCNT,
+		        	(SELECT NAME FROM MEMBER  WHERE WRITER = MNO) WRITERNAME, (SELECT PROFIMG FROM MEMBER WHERE WRITER = MNO) PROFIMG,
+        			(SELECT CASE WHEN COUNT(*) <= ${postRn}+10 THEN 1 ELSE 0 END CASE FROM POST WHERE OWNER = #{mno}) ISEND,
+    				NVL((SELECT CASE WHEN MNO = #{mno} THEN 1  END FROM POST_GOOD PG WHERE MNO = #{mno} AND PG.POSTNO = POST.POSTNO),0) ISGOOD    
+			FROM POST
+			WHERE WRITER IN (SELECT FRIEND2 FROM FRIENDS WHERE FRIEND1 = #{mno})
+				  OR OWNER IN(SELECT FRIEND2 FROM FRIENDS WHERE FRIEND1= #{mno}) 
+				  AND NOT WRITER = #{mno}
+			      AND POSTNO > 0
+		) P 
+		LEFT OUTER JOIN 
+		ATTACHFILE ON REFNO = POSTNO
+		WHERE RN <= 10 + ${postRn}
+		AND RN > ${postRn}
+		ORDER BY RN
+		]]>
+	</select>
+	
+</mapper>

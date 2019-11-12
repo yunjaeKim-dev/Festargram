@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	
+	<bean class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" id="passwordEncoder"></bean>
+	<bean class="com.teamproject.security.CustomAccessDeniedHandler" id="customAccessDenied"></bean>
+	<bean class="com.teamproject.security.CustomLoginSuccessHandler" id="customLoginSeuccessHandler"></bean>
+	<bean class="com.teamproject.security.CustomUserDetailsService" id="userDetailsService"/>
+	<bean class="com.teamproject.security.CustomLoginFailureHandler" id="authenticationFailureHandler"></bean>
+	<security:http>
+		<security:intercept-url pattern="/" access="permitAll"/>
+		<security:intercept-url pattern="/member/signup" access="permitAll"/>
+		<security:intercept-url pattern="/member/login" access="permitAll"/>
+		<security:intercept-url pattern="/member/doubleCheck" access="permitAll"/>
+		<security:intercept-url pattern="/sendMail/*" access="permitAll"/>
+		<security:intercept-url pattern="/upload/*" access="hasRole('ROLE_USER')"/>
+		<security:intercept-url pattern="/member/*" access="hasRole('ROLE_USER')"/>
+		<security:intercept-url pattern="/postrest/*" access="hasRole('ROLE_USER')"/>
+		<security:intercept-url pattern="/post/*" access="hasRole('ROLE_USER')"/>
+		<security:intercept-url pattern="/alarm/*" access="hasRole('ROLE_USER')"/>
+		<security:intercept-url pattern="/messenger/*" access="hasRole('ROLE_USER')"/>
+		<security:intercept-url pattern="/message/*" access="hasRole('ROLE_USER')"/>
+		<security:intercept-url pattern="/friend/*" access="hasRole('ROLE_USER')"/>
+		<security:form-login login-page="/member/login" authentication-success-handler-ref="customLoginSeuccessHandler" authentication-failure-handler-ref="authenticationFailureHandler"/>
+		<security:logout invalidate-session="true" logout-success-url="/" />
+		<security:access-denied-handler ref="customAccessDenied"/>
+	</security:http>
+	
+	
+	
+	
+	
+	<security:authentication-manager>
+		<security:authentication-provider user-service-ref="userDetailsService">
+			<security:password-encoder ref="passwordEncoder"/>
+			 
+		</security:authentication-provider>
+	</security:authentication-manager>
+</beans>

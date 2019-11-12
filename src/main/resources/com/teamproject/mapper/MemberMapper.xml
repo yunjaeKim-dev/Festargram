@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamproject.mapper.MemberMapper">
+	<resultMap type="com.teamproject.domain.Member" id="memberMap">
+		<id property="email" column="email"/>
+		<result property="password" column="password"/>
+		<result property="name" column="name"/>
+		<result property="phone" column="phone"/>
+		<result property="address" column="address"/>
+		<result property="gender" column="gender"/>
+		<result property="birthdate" column="birthdate"/>
+		<result property="joindate" column="joindate"/>
+		<result property="recdate" column="recdate"/>
+		<result property="state" column="state"/>
+		<result property="school" column="school"/>
+		<result property="job" column="job"/>
+		<result property="interesting" column="interesting"/>
+		<result property="coverimg" column="coverimg"/>
+		<result property="profimg" column="profimg"/>
+		<result property="selfintro" column="selfintro"/>
+		<result property="mno" column="mno"/>
+		<collection property="authList" resultMap="authMap"/>
+	</resultMap>
+	<resultMap type="com.teamproject.domain.AuthVO" id="authMap">
+		<result property="email" column="email"/>
+		<result property="auth" column="auth"/>
+	</resultMap>
+
+
+	<!-- 이메일을통해 권한리스트가진 회원객체반환 -->
+	<select id="read" resultMap="memberMap">
+		SELECT EMAIL, PASSWORD, NAME, PHONE, ADDRESS, GENDER, TO_CHAR(BIRTHDATE, 'YYYY-MM-DD') BIRTHDATE, JOINDATE, RECDATE, STATE, SCHOOL, JOB, INTERESTING, COVERIMG, PROFIMG, SELFINTRO, MNO, AUTH
+		FROM MEMBER
+		JOIN MEMBER_AUTH USING(EMAIL)
+		WHERE EMAIL = #{email} and STATE != '1'
+	</select>
+	
+	<!-- 이메일을통해 회원존재여부 카운트 -->
+	<select id="count" parameterType="string" resultType="int">
+		SELECT COUNT(*) FROM MEMBER WHERE EMAIL = #{email}
+	</select>
+	
+	<select id="getEmailByMno" resultType="string">
+		SELECT EMAIL FROM MEMBER WHERE MNO = #{mno}
+	</select>
+	
+
+	<sql id="memberlist">
+		SELECT /*+ INDEX_ASC(MEMBER IDX_MEMBER) */EMAIL, PASSWORD, NAME, PHONE, ADDRESS, GENDER, TO_CHAR(BIRTHDATE, 'YYYY-MM-DD') BIRTHDATE, JOINDATE, RECDATE, STATE, SCHOOL, JOB, INTERESTING, COVERIMG, PROFIMG, SELFINTRO, MNO FROM MEMBER 
+	</sql>
+	
+	<!-- 모든회원 리스트 반환 -->
+	<select id="getList" resultType="com.teamproject.domain.Member">
+		<include refid="memberlist"></include>
+	</select>
+	
+	
+	<!-- email을 통한 회원객체반환  -->
+	<select id="getByEmail" resultType="com.teamproject.domain.Member" >
+		<include refid="memberlist"></include>
+		WHERE email = #{email}
+	</select>
+	
+	<!-- 회원번호를 통한 회원객체반환 -->
+	<select id="getByMno" resultType="com.teamproject.domain.Member">
+		<include refid="memberlist"></include>
+		WHERE MNO = #{mno} 
+	</select>
+	
+	<!-- 로그인 -->
+	<select id="getmember" resultType="com.teamproject.domain.Member" >
+		<include refid="memberlist"/>
+		WHERE email = #{email} AND pwd = #{pwd}
+	</select>
+	<!--회원 가입 -->
+	<insert id="insert" parameterType="com.teamproject.domain.Member">
+	INSERT INTO MEMBER(MNO, EMAIL, PASSWORD , NAME, PHONE, BIRTHDATE) VALUES(SEQ_MEMBER.NEXTVAL,#{email},#{password}, #{name}, #{phone}, TO_DATE(#{birthdate}, 'YYYY-MM-DD'))
+	</insert>
+	<insert id="insertAuth" parameterType="com.teamproject.domain.AuthVO">
+	INSERT INTO MEMBER_AUTH VALUES(#{email}, #{auth})
+	</insert>
+	
+	
+	<!-- 회원비밀번호 수정 -->
+	<update id="updatePWD" parameterType="com.teamproject.domain.Member">
+		UPDATE MEMBER SET PASSWORD = #{password}
+		 WHERE EMAIL = #{email}
+	</update>
+	<!-- 회원 기본 정보 (비밀번호, 폰번호, 이름) 수정 -->
+	<update id="updateBaseInfo" parameterType="com.teamproject.domain.Member">
+		UPDATE MEMBER SET 
+		<if test="password != ''">
+			PASSWORD = #{password},
+		</if>
+		PHONE = #{phone},
+		NAME = #{name} ,
+		BIRTHDATE = TO_DATE(#{birthdate}, 'YYYY-MM-DD')
+		WHERE MNO = #{mno}
+	</update>
+	
+	<update id="updateSelfintro">
+		UPDATE MEMBER SET SELFINTRO = #{selfintro} WHERE MNO = #{mno}
+	</update>
+	
+	<!-- 회원 추가 정보 (주소, 성별, 학교, 직장, 흥미) 수정 -->
+	<update id="updateExtraInfo" parameterType="com.teamproject.domain.Member">
+		UPDATE MEMBER SET 
+			ADDRESS = #{address}, SCHOOL = #{school}, 
+			JOB = #{job}, INTERESTING = #{interesting}
+			<if test="gender != null">
+			,GENDER = #{gender}
+			</if>
+		WHERE MNO = #{mno}   
+	</update>
+	
+	<!-- 회원 프로필 사진 수정 -->
+	<update id="modifyProfimg" parameterType="com.teamproject.domain.Member">
+		UPDATE MEMBER SET PROFIMG = #{profimg} WHERE MNO = #{mno}
+	</update>
+	<!-- 회원 프로필 커버 사진 수정 -->
+	<update id="modifyProfileCoverImg" parameterType="com.teamproject.domain.Member">
+		UPDATE MEMBER SET COVERIMG = #{coverimg} WHERE MNO = #{mno}
+	</update>
+	
+	
+	<!-- 회원 탈퇴 상태 변경 -->
+	<update id="updateMemberState" parameterType="com.teamproject.domain.Member">
+		UPDATE MEMBER SET STATE = '1' WHERE MNO = #{mno}	 
+	</update>
+	
+	
+	
+	<!-- 그의 코드  -->
+	<update id="delete">
+		UPDATE MEMBER SET STATE  = 0 WHERE email = #{email}
+	</update>
+	
+	<update id="updatemember" parameterType="com.teamproject.domain.Member"><!--회원정보 변경-->
+		UPDATE MEMBER SET PWD = #{pwd}, NAME = #{name},PHONE = #{phone} WHERE EMAIL = #{email}
+	</update>
+	
+	
+	
+	
+	
+	<!-- 유저검색(페이징포함) -->
+	<select id="getMemberListByPaging" parameterType="com.teamproject.domain.PageDTO" resultType="com.teamproject.domain.Member">
+		<![CDATA[
+			SELECT *
+			FROM (
+			SELECT ROWNUM RN, EMAIL, NAME, PHONE, ADDRESS, GENDER, BIRTHDATE, JOINDATE, RECDATE, STATE, SCHOOL, JOB, INTERESTING, COVERIMG, PROFIMG, SELFINTRO, MNO 
+			FROM MEMBER
+			WHERE NAME LIKE '%'||#{keyword}||'%'
+			)WHERE ROWNUM <= #{cri.amount} AND RN > #{cri.sinceID}
+		]]>
+	</select>
+	<!-- 최근 접속 시간 업데이트 -->
+	<update id="updateRecdate" >
+		UPDATE MEMBER SET RECDATE = SYSDATE WHERE MNO = #{mno}
+	</update>
+	
+	<!-- 친구 관련 -->
+	<!-- 친구목록리스트  -->
+	<select id="getFriendList" resultType="com.teamproject.domain.Member">
+		SELECT EMAIL, NAME, PHONE, ADDRESS, GENDER, BIRTHDATE, JOINDATE, RECDATE, STATE, SCHOOL, JOB, INTERESTING, COVERIMG, PROFIMG, SELFINTRO, MNO
+		FROM MEMBER
+		JOIN(
+    		SELECT /*+ INDEX(FRIENDS IDX_FRIENDS_REGDATE) */ FRIEND2  FROM FRIENDS WHERE FRIEND1 = #{mno} 
+			)FRIEND
+		ON MEMBER.MNO = FRIEND.FRIEND2
+	</select>
+	
+	<!-- 마이페이지의 onwer 의 친구리스트 구하고 로그인된유저와 그친구들관의 관계코드 -->
+	<select id="getOwnerFriendList" resultType="myMap">
+		SELECT EMAIL, NAME, RECDATE, SCHOOL, JOB, INTERESTING, MNO,PROFIMG,
+        (SELECT COUNT(*) FROM FRIENDS WHERE FRIEND1 = MNO) FRCOUNT,
+        (CASE 
+            WHEN (SELECT COUNT(*) FROM FRIENDS_APPLY WHERE APPLICANT = #{currentno} AND TARGET = MNO) > 0 THEN '1'
+            WHEN (SELECT COUNT(*) FROM FRIENDS_APPLY WHERE APPLICANT = MNO AND TARGET = #{currentno}) > 0 THEN '2'
+            WHEN (SELECT COUNT(*) FROM FRIENDS WHERE FRIEND1 = MNO AND FRIEND2 = #{currentno}) > 0 THEN '3'
+            ELSE '4'
+        END) REALTION
+
+		FROM MEMBER
+		JOIN(
+    		SELECT /*+ INDEX(FRIENDS IDX_FRIENDS) */ FRIEND2  FROM FRIENDS WHERE FRIEND1 = #{ownerno}
+			)FRIEND
+		ON MEMBER.MNO = FRIEND.FRIEND2
+        WHERE MNO != #{currentno}
+        AND STATE != '1'
+	</select>
+
+	<!-- 친구 목록 리스트 최근 접속일로 정렬 -->
+	<select id="getFriendListOrderRecdate" parameterType="integer" resultType="com.teamproject.domain.Member">
+	<![CDATA[
+		SELECT EMAIL, NAME, PHONE, ADDRESS, GENDER, BIRTHDATE, JOINDATE, TO_DATE(RECDATE,'YYYY-MM-DD HH24:MI:SS') RECDATE, STATE, SCHOOL, JOB, INTERESTING, COVERIMG, PROFIMG, SELFINTRO, MNO
+		FROM MEMBER
+		JOIN(
+		    SELECT /*+ INDEX(FRIENDS IDX_FRIENDS_REGDATE) */ FRIEND2  FROM FRIENDS WHERE FRIEND1 = #{mno}
+		    )FRIEND
+		ON MEMBER.MNO = FRIEND.FRIEND2
+		ORDER BY MEMBER.RECDATE DESC
+	]]>	
+	</select>
+
+	<!-- 나한테 온 친구신청목록 get(parameter Member vo) (return List<Member>)  -->
+	<select id="getFriendApplyList" resultType="com.teamproject.domain.Member">
+		SELECT EMAIL, NAME, PHONE, ADDRESS, GENDER, BIRTHDATE, JOINDATE, RECDATE, STATE, SCHOOL, JOB, INTERESTING, COVERIMG, PROFIMG, SELFINTRO, MNO 
+		FROM MEMBER WHERE MNO IN (
+ 		   SELECT APPLICANT FROM FRIENDS_APPLY WHERE TARGET = #{mno}
+		)
+	</select>
+	
+	<!-- 친구신청   -->
+	<insert id="friendApply" parameterType="int">
+		INSERT INTO FRIENDS_APPLY(APPLICANT, TARGET) VALUES(#{applicant}, #{target})
+	</insert>
+	
+	<!-- 친구신청 삭제 -->
+	<delete id="removeApply" parameterType="int">
+		DELETE FRIENDS_APPLY WHERE APPLICANT = #{applicant} AND TARGET = #{target}	
+	</delete>
+
+
+	<!-- 친구목록에 추가 -->
+	<insert id="addFriend" parameterType="int">
+	      INSERT ALL
+			INTO FRIENDS VALUES (#{f1}, #{f2}, SYSDATE, 0 ,0) 
+			INTO FRIENDS VALUES (#{f2}, #{f1}, SYSDATE, 0 ,0)
+			SELECT * FROM DUAL
+	</insert>
+	
+	<!-- 친구삭제 -->
+	<delete id="removeFriend" parameterType="int">
+	DELETE FRIENDS
+	WHERE (FRIEND1 = #{f1} AND FRIEND2 = #{f2}) 
+		OR
+		 (FRIEND1 = #{f2} AND FRIEND2 = #{f1}) 
+	</delete>
+	
+	<!-- 친구인지확인 -->
+	<select id="isFriend" parameterType="int" resultType="int">
+		SELECT COUNT(*) FROM
+		(
+		SELECT * FROM FRIENDS
+		WHERE (FRIEND1 = #{f1} AND FRIEND2 = #{f2}) 
+		OR
+		 	  (FRIEND1 = #{f2} AND FRIEND2 = #{f1})
+		) 
+	</select>
+	
+	<!-- 친구 신청 중인지 확인 -->
+	<select id="isApply" parameterType="int" resultType="int">
+		SELECT COUNT(*) FROM FRIENDS_APPLY WHERE APPLICANT= #{applicant} AND TARGET = #{target} 
+	</select>
+	
+	<!-- 알수도 있는 사람 -->
+	<select id="getMayKnowList" resultType="myMap">
+		SELECT MNO, 
+		(SELECT COUNT(*) FROM FRIENDS WHERE FRIEND1 = MNO) COUNT,
+        (SELECT COUNT(*) FROM FRIENDS_APPLY WHERE APPLICANT= #{mno} AND TARGET = MNO) ISAPPLY,
+		NAME, ADDRESS, SCHOOL, JOB, INTERESTING, PROFIMG
+	FROM
+	(
+	    SELECT DISTINCT FRIEND2 MNO
+	    FROM FRIENDS
+	    WHERE FRIEND1 IN (SELECT FRIEND2 FROM FRIENDS WHERE FRIEND1 = #{mno})
+	    AND FRIEND2 NOT IN (SELECT FRIEND2 FROM FRIENDS WHERE FRIEND1 = #{mno})
+	    AND NOT FRIEND2 = #{mno}
+	    AND NOT FRIEND2 IN (SELECT APPLICANT FROM FRIENDS_APPLY WHERE TARGET = #{mno})
+	) 
+	JOIN MEMBER USING(MNO)
+		<if test="cri.amount != 0">
+		<![CDATA[
+			WHERE ROWNUM < #{cri.amount}
+		]]>
+		</if>
+	</select>
+	
+
+	
+</mapper>

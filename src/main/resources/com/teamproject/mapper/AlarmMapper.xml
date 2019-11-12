@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamproject.mapper.AlarmMapper">
+
+<!-- <resultMap type="alarm" id="alarmResultMap">
+	<result property="alarmno" column="alarmno"/>
+	<result property="category" column="category"/>
+	<result property="mno" column="mno"/>
+	<result property="regdate" column="regdate"/>
+
+</resultMap> -->
+	<!-- 게시글 알람 추가 -->
+	<insert id="insertPostAlarm">
+		INSERT INTO POST_ALARM(POST_ALARMNO, MNO, POSTNO) VALUES(ALARM_SEQ.NEXTVAL, #{mno}, #{postno})
+	</insert>
+	<!-- 댓글 알람 추가 -->
+	
+	<insert id="insertReplyAlarm">
+		<selectKey keyProperty="mno" order="BEFORE" resultType="int">
+			SELECT MNO FROM MEMBER WHERE EMAIL = #{writer}
+		</selectKey>
+		INSERT INTO REPLY_ALARM(REPLY_ALARMNO, MNO, REPLYNO) VALUES(ALARM_SEQ.NEXTVAL, #{mno}, #{replyno})
+	</insert>
+	<!-- 메시지 알림 확인 -->
+	<select id="selectMessageAlarm" resultType="int">
+		SELECT COUNT(*) FROM MESSAGE_ALARM 
+		WHERE 
+			APPLICANT = (SELECT MNO FROM MEMBER WHERE EMAIL = #{sender}) 
+			AND 
+			TARGET = (SELECT MNO FROM MEMBER WHERE EMAIL = #{receiver}) 
+	</select>
+	
+	<!-- 메시지 알람 추가 -->
+	<insert id="insertMessageAlarm">
+		<!-- <selectKey keyProperty="applicant,target" order="BEFORE" resultType="hashmap">
+			SELECT (SELECT MNO FROM MEMBER WHERE EMAIL = #{sender}) AS APPLICANT, 
+					(SELECT MNO FROM MEMBER WHERE EMAIL = #{receiver}) AS TARGET
+			FROM DUAL
+		</selectKey> -->
+		INSERT INTO MESSAGE_ALARM(MESSAGE_ALARMNO , APPLICANT , TARGET ) 
+		VALUES(ALARM_SEQ.NEXTVAL, (SELECT MNO FROM MEMBER WHERE EMAIL = #{sender}), (SELECT MNO FROM MEMBER WHERE EMAIL = #{receiver}))
+	</insert>
+	
+	<!-- 메시지 알림 갱신 -->
+	<update id="updateMessageAlarm">
+		UPDATE MESSAGE_ALARM  SET REGDATE = SYSDATE 
+		WHERE APPLICANT = (SELECT MNO FROM MEMBER WHERE EMAIL = #{sender}) 
+		AND TARGET = (SELECT MNO FROM MEMBER WHERE EMAIL = #{receiver})
+	</update>
+	
+	<!-- 알림 목록 가져오기 -->
+	<select id="selectAlarm" resultType="alarm">
+		SELECT A.ALARMNO, M.NAME, M.MNO, M.PROFIMG, CATEGORY , PARENTNO, A.REGDATE 
+		FROM(
+		    SELECT MESSAGE_ALARMNO AS ALARMNO, APPLICANT, (SELECT '1' FROM DUAL) AS CATEGORY, (SELECT 0 FROM DUAL) PARENTNO, REGDATE 
+		    	FROM MESSAGE_ALARM  WHERE TARGET = #{mno}
+		    UNION 
+		    SELECT POST_ALARMNO, MNO, (SELECT '2' FROM DUAL) AS CATEGORY, POSTNO PARENTNO, REGDATE FROM POST_ALARM
+		    UNION
+		    SELECT REPLY_ALARMNO, MNO, (SELECT '3' FROM DUAL) AS CATEGORY, REPLYNO PARENTNO,  REGDATE FROM REPLY_ALARM
+		    ) A
+		JOIN 
+		    (SELECT * FROM FRIENDS WHERE FRIEND1 = #{mno}) F ON (F.FRIEND2 = A.APPLICANT)
+		JOIN
+		    MEMBER M ON (M.MNO = F.FRIEND2)
+		ORDER BY REGDATE DESC    
+	</select>
+	<!-- 메시지 알림 목록 가져오기 -->
+	<select id="selectMessageAlarmList" resultType="alarm">
+		SELECT A.MESSAGE_ALARMNO AS ALARMNO, NAME, PROFIMG, (SELECT 1 FROM DUAL), (SELECT 0 FROM DUAL), A.REGDATE AS REGDATE
+		FROM MESSAGE_ALARM A
+		JOIN MEMBER B ON (A.APPLICANT = B.MNO)
+		WHERE A.TARGET = #{mno}
+	</select>
+</mapper>

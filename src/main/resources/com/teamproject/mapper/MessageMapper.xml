@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamproject.mapper.MessageMapper">
+	<resultMap type="message" id="messageResultMap">
+		<result property="messno" column="messno"/>
+		<result property="sender" column="sender"/>
+		<result property="receiver" column="receiver"/>
+		<result property="profimg" column="profimg"/>
+		<result property="content" column="content" />
+		<result property="regdate" column="regdate"/>
+		<result property="type" column="type"/>
+	</resultMap>
+	
+	<!-- 메시지 등록 -->	
+	<insert id="insertR" parameterType="message">
+		INSERT INTO 
+		SEND_MESSAGE(MESSNO, SENDER, RECEIVER, CONTENT) 
+		VALUES(MESSAGE_SEQ.NEXTVAL,#{sender},#{receiver},#{content})
+	</insert>
+	<insert id="insertS" parameterType="message">
+		INSERT INTO 
+		RECEIVE_MESSAGE(MESSNO, SENDER, RECEIVER, CONTENT) 
+		VALUES(MESSAGE_SEQ.CURRVAL,#{receiver},#{sender},#{content})
+	</insert>
+	
+	<!-- 메시지 조회 -->
+	<select id="selectByEmail" resultMap="messageResultMap">
+		SELECT MESSNO, SENDER, RECEIVER, PROFIMG, CONTENT, REGDATE, TYPE
+		FROM
+			(SELECT /*+ INDEX(SEND_MESSAGE SEND_MESSAGE_IDX) */
+                MESSNO, SENDER, RECEIVER, TO_CHAR(CONTENT) CONTENT, REGDATE, (SELECT '0' FROM DUAL) AS "TYPE" FROM SEND_MESSAGE 
+            UNION
+            SELECT /*+ INDEX(RECEIVE_MESSAGE RECEIVE_MESSAGE_IDX) */ 
+                MESSNO, SENDER, RECEIVER, TO_CHAR(CONTENT) CONTENT, REGDATE, (SELECT '1' FROM DUAL) AS "TYPE" FROM RECEIVE_MESSAGE
+            ) A
+        JOIN MEMBER B ON (A.RECEIVER = B.EMAIL)
+		WHERE MESSNO > 0 AND SENDER = #{sender} AND RECEIVER = #{receiver}
+		ORDER BY REGDATE
+	</select>
+	<select id="selectAll" resultMap="messageResultMap">
+		SELECT MESSNO, SENDER, RECEIVER, CONTENT, REGDATE, TYPE
+		FROM
+			(SELECT /*+ INDEX(SEND_MESSAGE SEND_MESSAGE_IDX2) */
+                MESSNO, SENDER, RECEIVER, TO_CHAR(CONTENT) CONTENT, REGDATE, (SELECT '0' FROM DUAL) AS "TYPE" FROM SEND_MESSAGE 
+            UNION
+            SELECT /*+ INDEX(RECEIVE_MESSAGE RECEIVE_MESSAGE_IDX2) */ 
+                MESSNO, SENDER, RECEIVER, TO_CHAR(CONTENT) CONTENT, REGDATE, (SELECT '1' FROM DUAL) AS "TYPE" FROM RECEIVE_MESSAGE
+            )
+		WHERE MESSNO > 0 AND SENDER = #{sender}
+		ORDER BY REGDATE
+	</select>
+
+	<delete id="deleteS" parameterType="int">
+		DELETE FROM SEND_MESSAGE WHERE MESSNO = #{messno}
+	</delete>
+	<delete id="deleteR">
+		DELETE FROM RECEIVE_MESSAGE WHERE MESSNO = #{messno}	
+	</delete>	
+
+	<delete id="deleteAllS">
+		DELETE FROM SEND_MESSAGE WHERE SENDER = #{sender} AND RECEIVER = #{receiver}
+	</delete>
+	<delete id="deleteAllR">
+		DELETE FROM RECEIVE_MESSAGE WHERE RECEIVER = #{receiver} AND SENDER = #{sender}
+	</delete>	
+
+	
+<!-- 	<sql id="messageList">
+		SELECT MESSNO, SENDER, RECEIVER, CONTENT, REGDATE, TYPE
+		FROM
+			(SELECT MESSNO, SENDER, RECEIVER, TO_CHAR(CONTENT) CONTENT, REGDATE, (SELECT '0' FROM DUAL) AS "TYPE" FROM SEND_MESSAGE 
+			UNION
+			SELECT MESSNO, SENDER, RECEIVER, TO_CHAR(CONTENT) CONTENT, REGDATE, (SELECT '1' FROM DUAL) AS "TYPE" FROM RECEIVE_MESSAGE)
+		WHERE SENDER = #{sender}
+		ORDER BY REGDATE
+	</sql>
+	
+	<select id="selectMessage" parameterType="string" resultMap="messageResultMap">
+		<include refid="messageList"/>
+	</select>
+	
+	<select id="selectMessageWithFriend" resultMap="messageResultMap">
+		SELECT MESSNO, SENDER, RECEIVER, CONTENT, REGDATE, TYPE
+		FROM
+			(SELECT MESSNO, SENDER, RECEIVER, TO_CHAR(CONTENT) CONTENT, REGDATE, (SELECT '0' FROM DUAL) AS "TYPE" FROM SEND_MESSAGE 
+			UNION
+			SELECT MESSNO, SENDER, RECEIVER, TO_CHAR(CONTENT) CONTENT, REGDATE, (SELECT '1' FROM DUAL) AS "TYPE" FROM RECEIVE_MESSAGE)
+		WHERE SENDER = #{sender} AND RECEIVER = #{receiver}
+		ORDER BY REGDATE
+	</select>
+	
+	<select id="selectLastMessageUser" parameterType="string" resultType="string">
+		SELECT RECEIVER
+		FROM
+			(
+			<include refid="messageList" /> 
+			DESC
+			)
+		WHERE ROWNUM = 1
+	</select>
+	
+	<insert id="insertRToS">
+		INSERT INTO 
+			SEND_MESSAGE(MESSNO, SENDER, RECEIVER, CONTENT) 
+			VALUES(MESSAGE_SEQ.NEXTVAL,#{sender},#{receiver},#{content})
+	</insert>
+	<insert id="insertSToR">
+		INSERT INTO 
+			RECEIVE_MESSAGE(MESSNO, SENDER, RECEIVER, CONTENT) 
+			VALUES(MESSAGE_SEQ.CURRVAL,#{receiver},#{sender},#{content})
+	</insert>
+	
+	
+	<delete id="deleteByMessnoS" parameterType="integer">
+		DELETE SEND_MESSAGE WHERE MESSNO = #{messno} 
+	</delete>
+	<delete id="deleteByMessnoR" parameterType="integer">
+		DELETE RECEIVE_MESSAGE WHERE MESSNO = #{messno}
+	</delete>
+			
+	<delete id="deleteAllS">
+		DELETE SEND_MESSAGE WHERE SENDER = #{sender} AND RECEIVER = #{receiver}
+	</delete>
+	<delete id="deleteAllR">
+		DELETE RECEIVE_MESSAGE WHERE SENDER = #{sender} AND RECEIVER = #{receiver}
+	</delete>		
+			
+ -->			
+</mapper>

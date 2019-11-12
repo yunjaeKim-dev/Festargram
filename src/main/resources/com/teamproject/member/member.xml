@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamproject.mapper.MemberMapper">
+
+	<resultMap id="memberResult" type="com.teamproject.member.vo.Member">
+		<result property="email" column="EMAIL" />
+		<result property="pwd" column="PWD" />
+		<result property="phone" column="POHONE" />
+		<result property="address" column="ADDRESS" />
+		<result property="gender" column="GENDER" />
+		<result property="birthdate" column="BIRTHDATA" />
+		<result property="joindate" column="JOINDATE" />
+		<result property="recdate" column="RECDATE" />
+		<result property="state" column="STATE" />
+		<result property="mailconfirm" column="MAILCONFIRM" />
+		<result property="school" column="SCHOOL" />
+		<result property="job" column="JOB" />
+		<result property="interesting" column="INTERESTING" />
+		<result property="coverimg" column="COVERIMG" />
+		<result property="profimg" column="PROFIMG" />
+		<result property="selfintro" column="SELFINTRO" />
+		<result property="cipher" column="CIPHER" />
+	</resultMap>
+
+	<sql id="memberlist">
+		SELECT * FROM MEMBER
+	</sql>
+	<select id="getList" resultType="com.teamproject.member.vo.Member">
+		<include refid="memberlist"></include>
+	</select>
+	<select id="getmember" resultMap="memberResult" parameterType="com.teamproject.member.vo.Member">
+		<include refid="memberlist"/><!--조건검색(로그인)-->
+		WHERE
+		<choose>
+			<when test="email != null">
+				EMAIL = #{email} AND PWD = #{pwd}
+			</when>
+		</choose>
+	</select>
+	<insert id="insertmember" parameterType="com.teamproject.member.vo.Member"><!--회원가입-->
+		INSERT INTO(EMAIL,PWD,NAME,PHONE,ADDRESS,GENDER,JOINDATE) VALUES(#{email},#{pwd},#{name},#{phone},#{address},#{gender},#{joindate})
+	</insert>
+	<update id="memberActivation"><!--이메일 인증시 활성화-->
+		UPDATE MEMBER SET ACTIVATION = 1 WHERE CIPHER = #{cipher}
+	</update>
+
+	
+</mapper>
+	
+	
